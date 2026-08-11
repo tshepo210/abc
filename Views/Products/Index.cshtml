@@ -1,0 +1,37 @@
+@model IEnumerable<abc.Models.ProductEntity>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Products</h2>
+<p>
+    <a class="btn btn-primary" href="/Products/Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ProductId</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach(var p in Model) {
+        <tr>
+            <td>@p.ProductId</td>
+            <td>@p.Name</td>
+            <td>@p.Category</td>
+            <td>@p.Price</td>
+            <td>@p.StockQuantity</td>
+            <td>
+                <a class="btn btn-sm btn-secondary" href="/Products/Edit/@p.ProductId">Edit</a>
+                <a class="btn btn-sm btn-danger" href="/Products/Delete/@p.ProductId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
