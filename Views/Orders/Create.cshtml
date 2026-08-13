@@ -1,0 +1,27 @@
+@model abc.Models.OrderViewModel
+
+@{
+    ViewData["Title"] = "Create Order";
+}
+
+<h2>Create Order</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="CustomerId">Customer</label>
+        <select asp-for="CustomerId" class="form-control" asp-items="@(new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Model.Customers ?? new List<abc.Models.CustomerEntity>(), "CustomerId", "Email"))">
+            <option value="">-- select customer --</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label asp-for="ProductId">Product</label>
+        <select asp-for="ProductId" class="form-control" asp-items="@(new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Model.Products ?? new List<abc.Models.ProductEntity>(), "ProductId", "Name"))">
+            <option value="">-- select product --</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label asp-for="Quantity">Quantity</label>
+        <input asp-for="Quantity" class="form-control" type="number" min="1" />
+    </div>
+    <button type="submit" class="btn btn-primary">Place Order</button>
+</form>

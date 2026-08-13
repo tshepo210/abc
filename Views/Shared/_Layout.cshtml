@@ -32,6 +32,9 @@
                             <a class="nav-link text-dark @(currentController == "Products" ? "active" : "")" asp-area="" asp-controller="Products" asp-action="Index">Products</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-dark @(currentController == "Orders" ? "active" : "")" asp-area="" asp-controller="Orders" asp-action="Create">Orders</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-dark @(currentController == "Customers" ? "active" : "")" asp-area="" asp-controller="Customers" asp-action="Index">Customers</a>
                         </li>
                     </ul>

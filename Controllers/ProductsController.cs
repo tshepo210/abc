@@ -43,12 +43,8 @@ namespace abc.Controllers
                     if (!string.IsNullOrWhiteSpace(blobName))
                     {
                         product.ImageName = blobName;
-                        // build public url
-                        var opt = ((Microsoft.Extensions.Options.IOptions<abc.Models.AzureStorageOptions>)HttpContext.RequestServices.GetService(typeof(Microsoft.Extensions.Options.IOptions<abc.Models.AzureStorageOptions>)))!.Value;
-                        var accountConn = opt.ConnectionString;
-                        // The ProductBlobService sets container public access; blob URL can be obtained from container client
-                        // Use ProductBlobService to construct the URL or assume default blob endpoint format is available via BlobServiceClient
-                        product.ImageUrl = $"{_blobServiceUrl(blobName)}";
+                        // build public url using blob client
+                        product.ImageUrl = _blobService.GetBlobUri(blobName);
                     }
                 }
 
@@ -84,7 +80,7 @@ namespace abc.Controllers
                     if (!string.IsNullOrWhiteSpace(blobName))
                     {
                         product.ImageName = blobName;
-                        product.ImageUrl = $"{_blobServiceUrl(blobName)}";
+                        product.ImageUrl = _blobService.GetBlobUri(blobName);
                     }
                 }
 
@@ -119,35 +115,6 @@ namespace abc.Controllers
         }
 
         // helper to construct blob url via BlobServiceClient knowledge
-        private string _blobServiceUrl(string blobName)
-        {
-            // Try to get container client endpoint from ProductBlobService via reflection-less approach: construct from storage account endpoints
-            // For development simplicity, assume container has public URL using standard blob endpoint in connection string
-            var opt = (Microsoft.Extensions.Options.IOptions<abc.Models.AzureStorageOptions>)HttpContext.RequestServices.GetService(typeof(Microsoft.Extensions.Options.IOptions<abc.Models.AzureStorageOptions>));
-            var container = opt!.Value.BlobContainer;
-            // If connection string contains BlobEndpoint, try to parse account blob endpoint
-            var conn = opt.Value.ConnectionString;
-            // Attempt to extract AccountName and build URL: https://{accountName}.blob.core.windows.net/{container}/{blobName}
-            string accountName = null!;
-            try
-            {
-                var parts = conn.Split(';');
-                foreach (var p in parts)
-                {
-                    if (p.StartsWith("AccountName=", System.StringComparison.OrdinalIgnoreCase))
-                    {
-                        accountName = p.Substring("AccountName=".Length);
-                        break;
-                    }
-                }
-            }
-            catch { }
-            if (!string.IsNullOrWhiteSpace(accountName))
-            {
-                return $"https://{accountName}.blob.core.windows.net/{container}/{blobName}";
-            }
-            // fallback: return blobName only
-            return blobName;
-        }
+        // removed manual URL construction in favor of ProductBlobService.GetBlobUri
     }
 }
