@@ -23,7 +23,13 @@
 @foreach(var p in Model) {
         <tr>
             <td>@p.ProductId</td>
-            <td>@p.Name</td>
+            <td>
+                @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                {
+                    <img src="@p.ImageUrl" alt="@p.Name" style="max-height:60px; margin-right:8px;" />
+                }
+                @p.Name
+            </td>
             <td>@p.Category</td>
             <td>@p.Price</td>
             <td>@p.StockQuantity</td>

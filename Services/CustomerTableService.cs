@@ -15,7 +15,7 @@ namespace abc.Services
         public CustomerTableService(IOptions<AzureStorageOptions> options)
         {
             var opt = options.Value;
-            var tableName = string.IsNullOrWhiteSpace(opt.CustomersTableName) ? "CustomerProfiles" : opt.CustomersTableName;
+            var tableName = string.IsNullOrWhiteSpace(opt.TableNameCustomers) ? "CustomerProfiles" : opt.TableNameCustomers;
             _tableClient = new TableClient(opt.ConnectionString, tableName);
             try
             {

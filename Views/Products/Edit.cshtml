@@ -6,7 +6,7 @@
 
 <h2>Edit Product</h2>
 
-<form asp-action="Edit" method="post">
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="ProductId" />
     <div class="form-group">
         <label>Name</label>
@@ -27,6 +27,16 @@
     <div class="form-group">
         <label>Stock Quantity</label>
         <input asp-for="StockQuantity" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Product Image</label>
+        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+        {
+            <div>
+                <img src="@Model.ImageUrl" alt="Product Image" style="max-height:150px;" />
+            </div>
+        }
+        <input type="file" name="productImage" class="form-control-file" />
     </div>
     <button type="submit" class="btn btn-primary">Save</button>
     <a class="btn btn-secondary" href="/Products">Back to list</a>

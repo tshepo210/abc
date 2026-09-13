@@ -15,7 +15,7 @@ namespace abc.Services
         public ProductTableService(IOptions<AzureStorageOptions> options)
         {
             var opt = options.Value;
-            var tableName = string.IsNullOrWhiteSpace(opt.ProductsTableName) ? "Products" : opt.ProductsTableName;
+            var tableName = string.IsNullOrWhiteSpace(opt.TableNameProducts) ? "Products" : opt.TableNameProducts;
             _tableClient = new TableClient(opt.ConnectionString, tableName);
             try
             {
