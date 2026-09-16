@@ -8,7 +8,6 @@ namespace abc.Services
     {
         Task<IEnumerable<CustomerEntity>> GetAllAsync();
         Task<CustomerEntity?> GetAsync(string customerId);
-        Task CreateAsync(CustomerEntity customer);
         Task UpdateAsync(CustomerEntity customer);
         Task DeleteAsync(string customerId);
     }

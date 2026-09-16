@@ -24,15 +24,6 @@ namespace abc.Services
             catch { }
         }
 
-        public async Task CreateAsync(CustomerEntity customer)
-        {
-            if (string.IsNullOrWhiteSpace(customer.RowKey))
-                customer.RowKey = Guid.NewGuid().ToString();
-
-            customer.PartitionKey = "CUSTOMER";
-            await _tableClient.AddEntityAsync(customer);
-        }
-
         public async Task DeleteAsync(string customerId)
         {
             await _tableClient.DeleteEntityAsync("CUSTOMER", customerId);

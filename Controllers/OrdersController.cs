@@ -9,12 +9,18 @@ namespace abc.Controllers
         private readonly IProductService _productService;
         private readonly ICustomerService _customerService;
         private readonly IQueueService _queueService;
+        private readonly ITableStorageFunctionClient _tableStorageFunctionClient;
 
-        public OrdersController(IProductService productService, ICustomerService customerService, IQueueService queueService)
+        public OrdersController(
+            IProductService productService,
+            ICustomerService customerService,
+            IQueueService queueService,
+            ITableStorageFunctionClient tableStorageFunctionClient)
         {
             _productService = productService;
             _customerService = customerService;
             _queueService = queueService;
+            _tableStorageFunctionClient = tableStorageFunctionClient;
         }
 
         public async Task<IActionResult> Create()
@@ -54,6 +60,8 @@ namespace abc.Controllers
                 Delta = -model.Quantity,
                 ReferenceId = orderMsg.OrderId
             };
+
+            await _tableStorageFunctionClient.CreateOrderAsync(orderMsg);
 
             // Enqueue messages (fire-and-forget)
             await _queueService.EnqueueOrderAsync(orderMsg);

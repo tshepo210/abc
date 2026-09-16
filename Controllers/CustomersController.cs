@@ -8,10 +8,14 @@ namespace abc.Controllers
     public class CustomersController : Controller
     {
         private readonly ICustomerService _customerService;
+        private readonly ITableStorageFunctionClient _tableStorageFunctionClient;
 
-        public CustomersController(ICustomerService customerService)
+        public CustomersController(
+            ICustomerService customerService,
+            ITableStorageFunctionClient tableStorageFunctionClient)
         {
             _customerService = customerService;
+            _tableStorageFunctionClient = tableStorageFunctionClient;
         }
 
         public async Task<IActionResult> Index()
@@ -34,8 +38,15 @@ namespace abc.Controllers
                 if (string.IsNullOrWhiteSpace(customer.CustomerId))
                     customer.CustomerId = System.Guid.NewGuid().ToString();
 
-                await _customerService.CreateAsync(customer);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _tableStorageFunctionClient.CreateCustomerAsync(customer);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception exception)
+                {
+                    ModelState.AddModelError(string.Empty, $"Customer could not be saved: {exception.Message}");
+                }
             }
             return View(customer);
         }

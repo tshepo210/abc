@@ -2,3 +2,4 @@ bin/
 obj/
 .vs/
 appsettings.json
+ABCRetail.Functions/local.settings.json
