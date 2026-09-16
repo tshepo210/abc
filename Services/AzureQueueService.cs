@@ -1,51 +1,59 @@
-using System.Text.Json;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using abc.Models;
-using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 
 namespace abc.Services
 {
     public class AzureQueueService : IQueueService
     {
-        private readonly QueueClient _ordersQueue;
-        private readonly QueueClient _inventoryQueue;
+        private readonly HttpClient _httpClient;
+        private readonly FunctionsOptions _functions;
 
-        public AzureQueueService(IOptions<Models.AzureStorageOptions> options)
+        public AzureQueueService(
+            IOptions<FunctionsOptions> functions,
+            HttpClient httpClient)
         {
-            var opt = options.Value;
-            var conn = opt.ConnectionString;
-            var ordersName = string.IsNullOrWhiteSpace(opt.QueueNameOrders) ? "orders" : opt.QueueNameOrders;
-            var inventoryName = string.IsNullOrWhiteSpace(opt.QueueNameInventory) ? "inventory" : opt.QueueNameInventory;
-
-            _ordersQueue = new QueueClient(conn, ordersName);
-            _inventoryQueue = new QueueClient(conn, inventoryName);
-
-            try
-            {
-                _ordersQueue.CreateIfNotExists();
-            }
-            catch { }
-
-            try
-            {
-                _inventoryQueue.CreateIfNotExists();
-            }
-            catch { }
+            _functions = functions.Value;
+            _httpClient = httpClient;
         }
 
         public async Task EnqueueOrderAsync(OrderMessage order)
         {
             if (order == null) return;
-            var json = JsonSerializer.Serialize(order);
-            await _ordersQueue.SendMessageAsync(json);
+            await SendAsync("orders", order);
         }
 
         public async Task EnqueueInventoryAsync(InventoryMessage msg)
         {
             if (msg == null) return;
-            var json = JsonSerializer.Serialize(msg);
-            await _inventoryQueue.SendMessageAsync(json);
+            await SendAsync("inventory", msg);
+        }
+
+        private async Task SendAsync(string queueName, object message)
+        {
+            if (string.IsNullOrWhiteSpace(_functions.BaseUrl))
+                throw new InvalidOperationException("Functions:BaseUrl is not configured.");
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{_functions.BaseUrl.TrimEnd('/')}/queues/{queueName}")
+            {
+                Content = JsonContent.Create(message)
+            };
+            if (!string.IsNullOrWhiteSpace(_functions.QueueFunctionKey))
+                request.Headers.Add("x-functions-key", _functions.QueueFunctionKey);
+
+            using (request)
+            using (var response = await _httpClient.SendAsync(request))
+            {
+                if (response.IsSuccessStatusCode) return;
+
+                var detail = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"QueueStorageFunction returned {(int)response.StatusCode} ({response.ReasonPhrase}). {detail}");
+            }
         }
     }
 }

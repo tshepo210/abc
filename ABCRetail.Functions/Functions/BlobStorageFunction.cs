@@ -26,7 +26,7 @@ public sealed class BlobStorageFunction
             : "application/octet-stream";
         var uri = await _storage.UploadAsync(request.Body, fileName, contentType);
         var response = request.CreateResponse(HttpStatusCode.Created);
-        await response.WriteAsJsonAsync(new { blobName = Path.GetFileName(fileName), uri });
+        await response.WriteAsJsonAsync(new { blobName = Path.GetFileName(new Uri(uri).AbsolutePath), uri });
         return response;
     }
 }

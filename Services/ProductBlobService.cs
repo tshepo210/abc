@@ -7,6 +7,8 @@ using Azure.Storage;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using abc.Models;
 
 namespace abc.Services
@@ -14,12 +16,19 @@ namespace abc.Services
     public class ProductBlobService : IProductBlobService
     {
         private readonly BlobContainerClient _container;
+        private readonly HttpClient _httpClient;
+        private readonly FunctionsOptions _functions;
         private readonly string _connectionString;
         private readonly StorageSharedKeyCredential? _sharedKey;
 
-        public ProductBlobService(IOptions<AzureStorageOptions> options)
+        public ProductBlobService(
+            IOptions<AzureStorageOptions> options,
+            IOptions<FunctionsOptions> functions,
+            HttpClient httpClient)
         {
             var opt = options.Value;
+            _functions = functions.Value;
+            _httpClient = httpClient;
             var conn = opt.ConnectionString;
             _connectionString = conn;
             var containerName = string.IsNullOrWhiteSpace(opt.BlobContainer) ? "product-images" : opt.BlobContainer;
@@ -57,19 +66,38 @@ namespace abc.Services
             if (file == null || file.Length == 0) return null;
 
             var ext = Path.GetExtension(file.FileName);
-            var blobName = string.IsNullOrWhiteSpace(blobNamePrefix)
+            var fileName = string.IsNullOrWhiteSpace(blobNamePrefix)
                 ? $"{Guid.NewGuid()}{ext}"
                 : $"{blobNamePrefix}_{Guid.NewGuid()}{ext}";
+            if (string.IsNullOrWhiteSpace(_functions.BaseUrl))
+                throw new InvalidOperationException("Functions:BaseUrl is not configured.");
 
-            var blobClient = _container.GetBlobClient(blobName);
-            var headers = new BlobHttpHeaders { ContentType = file.ContentType };
-
-            using (var stream = file.OpenReadStream())
+            var uploadUri = $"{_functions.BaseUrl.TrimEnd('/')}/blobs/{Uri.EscapeDataString(fileName)}";
+            using var content = new StreamContent(file.OpenReadStream());
+            content.Headers.ContentType = new MediaTypeHeaderValue(
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
+            using var request = new HttpRequestMessage(HttpMethod.Post, uploadUri)
             {
-                await blobClient.UploadAsync(stream, headers);
+                Content = content
+            };
+            if (!string.IsNullOrWhiteSpace(_functions.BlobFunctionKey))
+                request.Headers.Add("x-functions-key", _functions.BlobFunctionKey);
+
+            using var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var detail = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"BlobStorageFunction returned {(int)response.StatusCode} ({response.ReasonPhrase}). {detail}");
             }
 
-            return blobName;
+            var result = await response.Content.ReadFromJsonAsync<BlobUploadResponse>();
+            return result?.BlobName;
+        }
+
+        private sealed class BlobUploadResponse
+        {
+            public string BlobName { get; set; } = string.Empty;
         }
 
         public string GetBlobUri(string blobName)

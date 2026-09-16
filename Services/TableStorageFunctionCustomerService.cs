@@ -10,11 +10,11 @@ namespace abc.Services
     public class TableStorageFunctionCustomerService : ITableStorageFunctionClient
     {
         private readonly HttpClient _httpClient;
-        private readonly TableStorageFunctionOptions _options;
+        private readonly FunctionsOptions _options;
 
         public TableStorageFunctionCustomerService(
             HttpClient httpClient,
-            IOptions<TableStorageFunctionOptions> options)
+            IOptions<FunctionsOptions> options)
         {
             _httpClient = httpClient;
             _options = options.Value;
@@ -53,7 +53,7 @@ namespace abc.Services
         private async Task PostAsync(string entityType, object payload)
         {
             if (string.IsNullOrWhiteSpace(_options.BaseUrl))
-                throw new InvalidOperationException("TableStorageFunction:BaseUrl is not configured.");
+                throw new InvalidOperationException("Functions:BaseUrl is not configured.");
 
             var functionUri = new Uri(
                 $"{_options.BaseUrl.TrimEnd('/')}/tables/{entityType}",
@@ -62,8 +62,8 @@ namespace abc.Services
             {
                 Content = JsonContent.Create(payload)
             };
-            if (!string.IsNullOrWhiteSpace(_options.FunctionKey))
-                request.Headers.Add("x-functions-key", _options.FunctionKey);
+            if (!string.IsNullOrWhiteSpace(_options.TableFunctionKey))
+                request.Headers.Add("x-functions-key", _options.TableFunctionKey);
 
             using var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)

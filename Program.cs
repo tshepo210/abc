@@ -18,13 +18,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Configure Azure Storage options and register table & blob services
 builder.Services.Configure<abc.Models.AzureStorageOptions>(builder.Configuration.GetSection("AzureStorage"));
-builder.Services.Configure<abc.Models.TableStorageFunctionOptions>(builder.Configuration.GetSection("TableStorageFunction"));
+builder.Services.Configure<abc.Models.FunctionsOptions>(builder.Configuration.GetSection("Functions"));
 builder.Services.AddSingleton<abc.Services.ICustomerService, abc.Services.CustomerTableService>();
 builder.Services.AddHttpClient<abc.Services.ITableStorageFunctionClient, abc.Services.TableStorageFunctionCustomerService>();
 builder.Services.AddSingleton<abc.Services.IProductService, abc.Services.ProductTableService>();
-builder.Services.AddSingleton<abc.Services.IProductBlobService, abc.Services.ProductBlobService>();
+builder.Services.AddHttpClient<abc.Services.IProductBlobService, abc.Services.ProductBlobService>();
 // Register Azure Queue service for order and inventory messaging (Phase 3)
-builder.Services.AddSingleton<abc.Services.IQueueService, abc.Services.AzureQueueService>();
+builder.Services.AddHttpClient<abc.Services.IQueueService, abc.Services.AzureQueueService>();
+builder.Services.AddHttpClient<abc.Services.IFunctionFileService, abc.Services.FunctionFileService>();
 
 var app = builder.Build();
 
